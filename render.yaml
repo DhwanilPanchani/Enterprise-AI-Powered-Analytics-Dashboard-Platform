@@ -1,8 +1,8 @@
-# File: backend/render.yaml
 services:
   - type: web
     name: user-service
     env: docker
+    dockerfilePath: backend/Dockerfile
     autoDeploy: false
     envVars:
       - key: DJANGO_SECRET_KEY
