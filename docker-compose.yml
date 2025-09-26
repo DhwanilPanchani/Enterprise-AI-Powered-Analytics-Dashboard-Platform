@@ -1,0 +1,64 @@
+# File: analytics-platform/docker-compose.yml
+
+version: '3.8'
+
+services:
+  # User Service (Django)
+  user-service:
+    build:
+      context: ./backend  # Points to the folder with the Django app's Dockerfile
+    container_name: user-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DJANGO_SECRET_KEY=django-insecure-6we_unvi*n(^hv5vj%2t$ru@5!0dpl&x@af-0vchku=^s^#al&
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db-users
+    depends_on:
+      - db-users # This service won't start until its database is ready
+
+  # Data Ingestion Service (Flask)
+  ingestion-service:
+    build:
+      context: ./ingestion_service # Points to the folder with the Flask app's Dockerfile
+    container_name: ingestion-service
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./ingestion_service:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SECRET_KEY=django-insecure-6we_unvi*n(^hv5vj%2t$ru@5!0dpl&x@af-0vchku=^s^#al&
+    depends_on:
+      - db-data # This service will depend on MongoDB
+
+  # PostgreSQL Database for the User Service
+  db-users:
+    image: postgres:13-alpine
+    container_name: db-users
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+
+  # MongoDB for the Data Ingestion Service
+  db-data:
+    image: mongo:latest
+    container_name: db-data
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  postgres_data:
+  mongo_data:

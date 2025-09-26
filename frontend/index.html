@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Intelligence Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .spinner { 
+            border-top-color: #4f46e5; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .fade-in { animation: fadeIn 0.6s ease-out; }
+        .slide-in { animation: slideIn 0.4s ease-out; }
+        .pulse-animation { animation: pulse 2s infinite; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .chart-container {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .ai-response {
+            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+            border-left: 4px solid #0288d1;
+        }
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        .input-focus:focus {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Enhanced UI Components ---
+        function Message({ text, isError, icon }) {
+            if (!text) return null;
+            const style = isError 
+                ? 'bg-red-50 text-red-800 border-red-200 border-l-red-500' 
+                : 'bg-blue-50 text-blue-800 border-blue-200 border-l-blue-500';
+            return (
+                <div className={`p-4 mb-4 rounded-lg text-sm border-l-4 ${style} fade-in flex items-center gap-3`}>
+                    {icon && <i className={`fas ${icon} text-lg`}></i>}
+                    <span>{text}</span>
+                </div>
+            );
+        }
+
+        function SalesChart({ salesData }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            const [isLoading, setIsLoading] = useState(true);
+            
+            useEffect(() => {
+                if (chartInstance.current) { chartInstance.current.destroy(); }
+                const ctx = chartRef.current.getContext('2d');
+                const productCounts = salesData.reduce((acc, sale) => {
+                    if (sale.event_type === 'sale') { acc[sale.product_id] = (acc[sale.product_id] || 0) + 1; }
+                    return acc;
+                }, {});
+                const chartLabels = Object.keys(productCounts);
+                const chartValues = Object.values(productCounts);
+                
+                setTimeout(() => {
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [{ 
+                                label: 'Sales Count', 
+                                data: chartValues, 
+                                backgroundColor: [
+                                    'rgba(79, 70, 229, 0.8)',
+                                    'rgba(236, 72, 153, 0.8)',
+                                    'rgba(16, 185, 129, 0.8)',
+                                    'rgba(245, 158, 11, 0.8)',
+                                    'rgba(239, 68, 68, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(79, 70, 229, 1)',
+                                    'rgba(236, 72, 153, 1)',
+                                    'rgba(16, 185, 129, 1)',
+                                    'rgba(245, 158, 11, 1)',
+                                    'rgba(239, 68, 68, 1)'
+                                ],
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false,
+                            }]
+                        },
+                        options: { 
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { 
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: { size: 12, weight: '500' }
+                                    }
+                                }, 
+                                title: { 
+                                    display: true, 
+                                    text: 'Sales Analytics Dashboard',
+                                    font: { size: 16, weight: '600' },
+                                    color: '#374151'
+                                } 
+                            },
+                            scales: { 
+                                y: { 
+                                    beginAtZero: true, 
+                                    ticks: { stepSize: 1 },
+                                    grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                                },
+                                x: {
+                                    grid: { display: false }
+                                }
+                            },
+                            animation: {
+                                duration: 2000,
+                                easing: 'easeInOutQuart'
+                            }
+                        }
+                    });
+                    setIsLoading(false);
+                }, 500);
+                
+                return () => { if (chartInstance.current) { chartInstance.current.destroy(); } };
+            }, [salesData]);
+            
+            return (
+                <div className="chart-container">
+                    {isLoading && (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="spinner w-8 h-8 border-4 border-t-4 border-indigo-500 rounded-full"></div>
+                        </div>
+                    )}
+                    <div className="relative h-64 sm:h-80" style={{ display: isLoading ? 'none' : 'block' }}>
+                        <canvas ref={chartRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        function AIQuery({ authTokens }) {
+            const [query, setQuery] = useState('');
+            const [answer, setAnswer] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+            const [recentQueries, setRecentQueries] = useState([]);
+            
+            const handleQuery = async (e) => {
+                e.preventDefault();
+                if (!query.trim() || isLoading) return;
+                setIsLoading(true); 
+                setAnswer(''); 
+                setError('');
+                
+                try {
+                    const response = await fetch('http://localhost:5001/api/nlq', { 
+                        method: 'POST', 
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'Authorization': `Bearer ${authTokens.access}` 
+                        }, 
+                        body: JSON.stringify({ question: query }) 
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Failed to get answer.');
+                    setAnswer(data.answer);
+                    setRecentQueries(prev => [query, ...prev.slice(0, 4)]);
+                } catch (err) { 
+                    setError(err.message); 
+                } finally { 
+                    setIsLoading(false); 
+                }
+            };
+
+            const handleQuickQuery = (quickQuery) => {
+                setQuery(quickQuery);
+            };
+
+            return (
+                <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 mt-8 hover-lift">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
+                            <i className="fas fa-robot text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold gradient-text">AI Data Analyst</h2>
+                            <p className="text-gray-600 text-sm">Ask questions about your data</p>
+                        </div>
+                    </div>
+                    
+                    <form onSubmit={handleQuery} className="mb-6">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex-1 relative">
+                                <input 
+                                    type="text" 
+                                    value={query} 
+                                    onChange={(e) => setQuery(e.target.value)} 
+                                    placeholder="e.g., How many sales for prod_alpha? Which product is most popular?" 
+                                    className="input-focus w-full py-4 px-6 pr-12 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                />
+                                <i className="fas fa-search absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            </div>
+                            <button 
+                                type="submit" 
+                                disabled={isLoading || !query.trim()} 
+                                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <div className="spinner w-5 h-5 border-2 border-t-2 border-white rounded-full"></div>
+                                        <span>Analyzing...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-paper-plane"></i>
+                                        <span>Ask AI</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+
+                    {recentQueries.length > 0 && (
+                        <div className="mb-6">
+                            <p className="text-sm font-medium text-gray-600 mb-3">Quick Questions:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {recentQueries.map((q, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleQuickQuery(q)}
+                                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-full transition-colors"
+                                    >
+                                        {q}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {error && <Message text={error} isError={true} icon="fa-exclamation-triangle" />}
+                    {answer && (
+                        <div className="ai-response p-6 rounded-xl border-l-4 border-blue-500 fade-in">
+                            <div className="flex items-start gap-3">
+                                <div className="p-2 bg-blue-100 rounded-lg">
+                                    <i className="fas fa-lightbulb text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-800 mb-2">AI Analysis:</p>
+                                    <p className="text-gray-700 leading-relaxed">{answer}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // --- Enhanced Page Components ---
+        function LoginPage({ setPage, setAuthTokens }) {
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [message, setMessage] = useState('');
+            const [isError, setIsError] = useState(false);
+            const [isLoading, setIsLoading] = useState(false);
+            
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setMessage(''); 
+                setIsError(false);
+                setIsLoading(true);
+                
+                try {
+                    const response = await fetch('http://localhost:8000/api/login/', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ username, password }) 
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error('Invalid username or password.');
+                    setAuthTokens(data);
+                    localStorage.setItem('authTokens', JSON.stringify(data));
+                    setPage('dashboard');
+                } catch (error) { 
+                    setIsError(true); 
+                    setMessage(`Login failed: ${error.message}`); 
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            
+            return (
+                <div className="glass-effect p-10 rounded-3xl shadow-2xl w-full max-w-md hover-lift">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl mb-4">
+                            <i className="fas fa-chart-line text-white text-2xl"></i>
+                        </div>
+                        <h1 className="text-3xl font-bold gradient-text mb-2">Welcome Back</h1>
+                        <p className="text-gray-600">Sign in to your analytics dashboard</p>
+                    </div>
+                    
+                    <Message text={message} isError={isError} icon={isError ? "fa-exclamation-triangle" : "fa-info-circle"} />
+                    
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <label className="block text-gray-700 text-sm font-semibold mb-2">
+                                <i className="fas fa-user mr-2"></i>Username
+                            </label>
+                            <input 
+                                type="text" 
+                                value={username} 
+                                onChange={(e) => setUsername(e.target.value)} 
+                                className="input-focus w-full py-4 px-4 text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                required 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 text-sm font-semibold mb-2">
+                                <i className="fas fa-lock mr-2"></i>Password
+                            </label>
+                            <input 
+                                type="password" 
+                                value={password} 
+                                onChange={(e) => setPassword(e.target.value)} 
+                                className="input-focus w-full py-4 px-4 text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                required 
+                            />
+                        </div>
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="spinner w-5 h-5 border-2 border-t-2 border-white rounded-full"></div>
+                                    <span>Signing In...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-sign-in-alt"></i>
+                                    <span>Sign In</span>
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        function RegisterPage({ setPage }) {
+            const [username, setUsername] = useState('');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [message, setMessage] = useState('');
+            const [isError, setIsError] = useState(false);
+            const [isLoading, setIsLoading] = useState(false);
+            
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setMessage(''); 
+                setIsError(false);
+                setIsLoading(true);
+                
+                try {
+                    const response = await fetch('http://localhost:8000/api/register/', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ username, email, password }) 
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(Object.values(data).join(' '));
+                    setMessage(`User "${data.user.username}" registered! You can now log in.`);
+                } catch (error) { 
+                    setIsError(true); 
+                    setMessage(`Registration failed: ${error.message}`); 
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            
+            return (
+                <div className="glass-effect p-10 rounded-3xl shadow-2xl w-full max-w-md hover-lift">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-2xl mb-4">
+                            <i className="fas fa-user-plus text-white text-2xl"></i>
+                        </div>
+                        <h1 className="text-3xl font-bold gradient-text mb-2">Create Account</h1>
+                        <p className="text-gray-600">Join the analytics platform</p>
+                    </div>
+                    
+                    <Message text={message} isError={isError} icon={isError ? "fa-exclamation-triangle" : "fa-check-circle"} />
+                    
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <label className="block text-gray-700 text-sm font-semibold mb-2">
+                                <i className="fas fa-user mr-2"></i>Username
+                            </label>
+                            <input 
+                                type="text" 
+                                value={username} 
+                                onChange={(e) => setUsername(e.target.value)} 
+                                className="input-focus w-full py-4 px-4 text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                required 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 text-sm font-semibold mb-2">
+                                <i className="fas fa-envelope mr-2"></i>Email
+                            </label>
+                            <input 
+                                type="email" 
+                                value={email} 
+                                onChange={(e) => setEmail(e.target.value)} 
+                                className="input-focus w-full py-4 px-4 text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                required 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-gray-700 text-sm font-semibold mb-2">
+                                <i className="fas fa-lock mr-2"></i>Password
+                            </label>
+                            <input 
+                                type="password" 
+                                value={password} 
+                                onChange={(e) => setPassword(e.target.value)} 
+                                className="input-focus w-full py-4 px-4 text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                required 
+                            />
+                        </div>
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold py-4 px-6 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="spinner w-5 h-5 border-2 border-t-2 border-white rounded-full"></div>
+                                    <span>Creating Account...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-user-plus"></i>
+                                    <span>Create Account</span>
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        function DashboardPage({ authTokens, setAuthTokens, setPage }) {
+            const [salesData, setSalesData] = useState(null);
+            const [error, setError] = useState('');
+            const [username, setUsername] = useState('');
+            const [isLoading, setIsLoading] = useState(true);
+            
+            const handleLogout = () => { 
+                setAuthTokens(null); 
+                localStorage.removeItem('authTokens'); 
+                setPage('login'); 
+            };
+            
+            useEffect(() => {
+                if (!authTokens) return;
+                const fetchProtectedData = async () => {
+                    try {
+                        const payload = JSON.parse(atob(authTokens.access.split('.')[1]));
+                        setUsername(payload.username || 'User');
+                        const response = await fetch('http://localhost:5001/api/data', { 
+                            method: 'GET', 
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Authorization': `Bearer ${authTokens.access}` 
+                            } 
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error('Could not fetch data. Your session may have expired.');
+                        setSalesData(data);
+                    } catch (err) { 
+                        setError(err.message); 
+                        setTimeout(handleLogout, 2000); 
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                fetchProtectedData();
+            }, [authTokens]);
+            
+            return (
+                <div className="bg-white p-8 rounded-3xl shadow-2xl border border-gray-100 w-full max-w-6xl hover-lift fade-in">
+                    <div className="flex justify-between items-start mb-8">
+                        <div className="flex items-center gap-4">
+                            <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl">
+                                <i className="fas fa-chart-bar text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold gradient-text">Welcome back, {username}!</h1>
+                                <p className="text-gray-600 mt-1">Your real-time analytics dashboard</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handleLogout} 
+                            className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-semibold py-3 px-6 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-lg flex items-center gap-2"
+                        >
+                            <i className="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </div>
+                    
+                    {error && <Message text={error} isError={true} icon="fa-exclamation-triangle" />}
+                    
+                    <div className="mb-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl">
+                                <i className="fas fa-chart-line text-white text-xl"></i>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800">Analytics Dashboard</h2>
+                        </div>
+                        
+                        <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-8 rounded-2xl border border-gray-100">
+                            {isLoading ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <div className="text-center">
+                                        <div className="spinner w-12 h-12 border-4 border-t-4 border-indigo-500 rounded-full mx-auto mb-4"></div>
+                                        <p className="text-gray-600 font-medium">Loading analytics data...</p>
+                                    </div>
+                                </div>
+                            ) : salesData && salesData.length > 0 ? (
+                                <SalesChart salesData={salesData} />
+                            ) : (
+                                <div className="text-center py-12">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-2xl mb-4">
+                                        <i className="fas fa-chart-bar text-gray-400 text-2xl"></i>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No Data Available</h3>
+                                    <p className="text-gray-500">Ingest some data to see your analytics dashboard</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <AIQuery authTokens={authTokens} />
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [page, setPage] = useState('login');
+            const [authTokens, setAuthTokens] = useState(() => 
+                localStorage.getItem('authTokens') ? JSON.parse(localStorage.getItem('authTokens')) : null
+            );
+
+            useEffect(() => {
+                if (authTokens) setPage('dashboard');
+                else setPage('login');
+            }, [authTokens]);
+
+            const AuthView = page === 'register' ? RegisterPage : LoginPage;
+            
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen p-4">
+                    {!authTokens ? (
+                        <div className="w-full max-w-md">
+                            <div className="mb-8 p-2 bg-white/20 backdrop-blur-sm rounded-2xl shadow-lg border border-white/30">
+                                <div className="flex">
+                                    <button 
+                                        onClick={() => setPage('login')} 
+                                        className={`flex-1 px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                                            page === 'login' 
+                                                ? 'bg-white text-indigo-600 shadow-lg' 
+                                                : 'text-white hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <i className="fas fa-sign-in-alt mr-2"></i>
+                                        Sign In
+                                    </button>
+                                    <button 
+                                        onClick={() => setPage('register')} 
+                                        className={`flex-1 px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                                            page === 'register' 
+                                                ? 'bg-white text-indigo-600 shadow-lg' 
+                                                : 'text-white hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <i className="fas fa-user-plus mr-2"></i>
+                                        Sign Up
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="slide-in">
+                                <AuthView setPage={setPage} setAuthTokens={setAuthTokens} />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="fade-in">
+                            <DashboardPage authTokens={authTokens} setAuthTokens={setAuthTokens} setPage={setPage} />
+                        </div>
+                    )}
+                </div>
+            );
+        }
+        
+        // Render the App
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>

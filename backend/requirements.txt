@@ -1,0 +1,14 @@
+asgiref==3.9.2
+dataclasses==0.6
+Django==3.2.12
+djangorestframework==3.13.1
+djongo==1.2.31
+dnspython==2.8.0
+pymongo==4.15.1
+pytz==2025.2
+sqlparse==0.5.3
+psycopg2-binary==2.9.5
+django-cors-headers==3.13.0
+djangorestframework-simplejwt==5.2.2
+gunicorn==22.0.0
+dj-database-url==2.1.0

@@ -1,0 +1,11 @@
+# File: backend/render.yaml
+services:
+  - type: web
+    name: user-service
+    env: docker
+    autoDeploy: false
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true # Render will generate a secure secret key for us
+      - key: DATABASE_URL
+        sync: false # We will set this manually in the Render dashboard
