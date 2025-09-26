@@ -25,4 +25,4 @@ EXPOSE 8000
 # # ... all other lines remain the same ...
 
 # Use Gunicorn to run the app in production
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "user_service.user_service.wsgi"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--chdir", "/app/user_service", "user_service.wsgi"]
