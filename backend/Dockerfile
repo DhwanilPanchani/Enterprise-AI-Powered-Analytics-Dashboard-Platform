@@ -17,6 +17,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application's code
 COPY backend/ .
 
+# Set production environment variables
+# IMPORTANT: Replace these placeholder values with your actual production keys.
+ENV DJANGO_SECRET_KEY='django-insecure-6we_unvi*n(^hv5vj%2t$ru@5!0dpl&x@af-0vchku=^s^#al&'
+ENV DATABASE_URL='postgresql://neondb_owner:npg_aR4spbefuw2z@ep-hidden-dream-advnpid6-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+
 # Expose the port the app runs on
 EXPOSE 8000
 
